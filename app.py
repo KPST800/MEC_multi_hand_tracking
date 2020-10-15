@@ -6,6 +6,7 @@ import io
 from camera import VideoCamera
 import json
 from hand_tracker import HandTracker
+import numpy as np
 
 app = Flask(__name__)
 

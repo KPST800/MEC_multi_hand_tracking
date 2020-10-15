@@ -1,0 +1,11 @@
+pip ==20.1.1
+numpy
+Flask
+opencv-python-headless
+#rflow==1.12.2
+tensorflow==1.15.0
+#protobuf>=3.6.1
+setuptools>=36
+six
+matplotlib==1.5.3
+

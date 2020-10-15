@@ -47,8 +47,8 @@ def runModel(img, threshold):
 
 @app.route('/')
 def index():
-    # return Response('ETRI Object Detection Test 2019.09.27 #8')
-    return render_template('index.html')
+    return Response('ETRI Object Detection Test 2019.09.27 #8')
+    #return render_template('index.html')
 
 
 def gen(cam_):

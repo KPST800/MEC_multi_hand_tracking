@@ -43,7 +43,7 @@ def runModel(img, threshold):
             model_output_json["y"] = list(points_[:,1])
 
             output_json.append(model_output_json)
-    return str(output_json)
+    return json.dumps(output_json)
 
 @app.route('/')
 def index():

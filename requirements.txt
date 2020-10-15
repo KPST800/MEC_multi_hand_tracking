@@ -1,7 +1,7 @@
 pip==20.2.3
 numpy
 #Pillow>=1.0
-#Pillow
+Pillow
 Flask
 opencv-python-headless
 tensorflow==1.15.0

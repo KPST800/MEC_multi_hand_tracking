@@ -247,8 +247,8 @@ class HandTracker():
             img,
             ((pad[0],pad[0]), (pad[1],pad[1]), (0,0)),
             mode='constant')
-        img_small = cv2.resize(img_pad, (256, 256))
-        img_small = np.ascontiguousarray(img_small)
+#         img_small = cv2.resize(img_pad, (256, 256))
+        img_small = np.ascontiguousarray(img_pad)
 
         img_norm = self._im_normalize(img_small)
         return img_pad, img_norm, pad

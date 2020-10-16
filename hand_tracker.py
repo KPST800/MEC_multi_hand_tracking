@@ -125,6 +125,10 @@ class HandTracker():
                         [256, 256, 1],
                         [  0, 256, 1],
                     ])
+        self.kp_orig_list = list()
+        self.img_landmarks = list()
+        self.Mtrs = list()
+        self.source_multi = list()
 
     def _get_triangle(self, kp0, kp2, dist=1):
         """get a triangle used to calculate Affine transformation matrix"""
@@ -148,9 +152,8 @@ class HandTracker():
 
     @staticmethod
     def _im_normalize(img):
-         return np.ascontiguousarray(
-             2 * ((img / 255) - 0.5
-        ).astype('float32'))
+        #  return np.ascontiguousarray(2 * ((img / 255) - 0.5).astype('float32'))
+        return np.ascontiguousarray(((img - 127.5) /  127.5).astype('float32'))
 
     @staticmethod
     def _sigm(x):
@@ -172,9 +175,9 @@ class HandTracker():
         return joints.reshape(num_imgs,-1,2)
 
     def detect_hand(self, img_norm,input_threshold):
-        assert -1 <= img_norm.min() and img_norm.max() <= 1,\
+        # assert -1 <= img_norm.min() and img_norm.max() <= 1,\
         "img_norm should be in range [-1, 1]"
-        assert img_norm.shape == (256, 256, 3),\
+        # assert img_norm.shape == (256, 256, 3),\
         "img_norm shape must be (256, 256, 3)"
 
         # predict hand location and 7 initial landmarks
@@ -212,7 +215,7 @@ class HandTracker():
 
         # Pick the first detected hand. Could be adapted for multi hand recognition
         # box_ids = box_ids[0]
-        source_multi = list()
+
         for box_id in box_ids:
             # bounding box offsets, width and height
             dx,dy,w,h = candidate_detect[box_id, :4]
@@ -235,19 +238,19 @@ class HandTracker():
             #     "selected_box_id": box_ids,
             # }
             
-            source_multi.append(source)
+            self.source_multi.append(source)
 
-        return source_multi
+        return self.source_multi
 
     def preprocess_img(self, img):
         # fit the image into a 256x256 square
         shape = np.r_[img.shape]
-        pad = (shape.max() - shape[:2]).astype('uint32') // 2
+        pad = (shape.max() - shape[:2]).astype('uint32') // 1
         img_pad = np.pad(
             img,
             ((pad[0],pad[0]), (pad[1],pad[1]), (0,0)),
             mode='constant')
-        img_small = cv2.resize(img_pad, (256, 256))
+        # img_small = cv2.resize(img_small, (256, 256))
         img_small = np.ascontiguousarray(img_small)
 
         img_norm = self._im_normalize(img_small)
@@ -256,7 +259,7 @@ class HandTracker():
 
     def __call__(self, img, input_threshold):
         img_pad, img_norm, pad = self.preprocess_img(img)
-        kp_orig_list = list()
+
         sources = self.detect_hand(img_norm, input_threshold)
         
         for source in sources:
@@ -267,21 +270,18 @@ class HandTracker():
         # to img_landmark coords (cropped hand image)
         scale = max(img.shape) / 256
         
-        img_landmarks = list()
-        Mtrs = list()
-
         num_imgs = 0
         for source in sources:
             Mtr = cv2.getAffineTransform(source * scale,self._target_triangle)
             img_landmark = cv2.warpAffine(self._im_normalize(img_pad), Mtr, (256,256))
         
-            Mtrs.append(Mtr)
-            img_landmarks.extend(img_landmark)
+            self.Mtrs.append(Mtr)
+            self.img_landmarks.extend(img_landmark)
             num_imgs = num_imgs + 1
                 
-        joints = self.predict_joints(np.array(img_landmarks),num_imgs)
+        joints = self.predict_joints(np.array(self.img_landmarks),num_imgs)
 
-        for (Mtr, joints_) in zip(Mtrs, joints):
+        for (Mtr, joints_) in zip(self.Mtrs, joints):
             # adding the [0,0,1] row to make the matrix square
             Mtr = self._pad1(Mtr.T).T
             Mtr[2,:2] = 0
@@ -293,5 +293,5 @@ class HandTracker():
             # box_orig = (self._target_box @ Minv.T)[:,:2]
             kp_orig -= pad[::-1]
             # box_orig -= pad[::-1]
-            kp_orig_list.append(kp_orig)
-        return kp_orig_list
+            self.kp_orig_list.append(kp_orig)
+        return self.kp_orig_list
